@@ -1,63 +1,62 @@
-# Architektur
+# Architecture
 
-## Ziel
+## Goal
 
-Gegeben ein Referenzbild *q* und ein Wurzelordner *R*: finde unter allen Bildern in *R*
-(rekursiv) dasjenige, dessen Inhalt *q* am ähnlichsten ist – unabhängig von Dateiname,
-Auflösung oder Bittiefe.
+Given a reference image *q* and a root folder *R*: among all images in *R* (recursively),
+find the one whose content is most similar to *q* – independent of file name,
+resolution or bit depth.
 
-## Ansatz
+## Approach
 
-1. **Laden & Normalisieren** – Jedes Bild (insbesondere TIFF mit 8/16/32 bit, Graustufen,
-   mehreren Kanälen oder Seiten) wird in ein einheitliches 8-bit-RGB-Bild überführt.
-2. **Embedding** – DINOv2 (Vision Transformer) erzeugt pro Bild einen globalen
-   Merkmalsvektor (CLS-Token). Die Vektoren werden L2-normalisiert.
-3. **Vergleich** – Ähnlichkeit = Kosinus-Ähnlichkeit = Skalarprodukt der normierten
-   Vektoren. Höchster Wert = ähnlichstes Bild.
+1. **Load & normalise** – every image (especially TIFF with 8/16/32 bit, grayscale,
+   multiple channels or pages) is converted to a uniform 8-bit RGB image.
+2. **Embed** – DINOv2 (Vision Transformer) produces one global feature vector per
+   image (CLS token). The vectors are L2-normalised.
+3. **Compare** – similarity = cosine similarity = dot product of the normalised vectors.
+   Highest score = most similar image.
 
-DINOv2 eignet sich besonders, weil es ohne Labels trainiert wurde und dadurch
-allgemeine visuelle Merkmale (Form, Textur, Struktur) gut erfasst – ideal für
-Bild-zu-Bild-Retrieval.
+DINOv2 is well suited because it was trained without labels and therefore captures
+general visual features (shape, texture, structure) – ideal for image-to-image retrieval.
 
-## Module
+## Modules
 
-| Modul                     | Verantwortung                                              |
-|---------------------------|------------------------------------------------------------|
-| `objecttwin.imageio`      | Bilder finden & laden, TIFF-Sonderfälle, Normalisierung auf RGB |
-| `objecttwin.embedder`     | DINOv2 laden (gebündelt oder Download), Embeddings berechnen |
-| `objecttwin.search`       | Ähnlichkeiten berechnen, Ranking                           |
-| `objecttwin.gui`          | PySide6-Oberfläche, Hintergrund-Worker für die Suche       |
-| `objecttwin.__main__`     | Einstiegspunkt                                             |
+| Module                    | Responsibility                                                   |
+|---------------------------|------------------------------------------------------------------|
+| `objecttwin.imageio`      | find & load images, TIFF special cases, normalisation to RGB     |
+| `objecttwin.embedder`     | load DINOv2 (bundled or downloaded), compute embeddings          |
+| `objecttwin.search`       | compute similarities, ranking                                    |
+| `objecttwin.gui`          | PySide6 user interface, background worker for the search         |
+| `objecttwin.__main__`     | entry point                                                      |
 
-Die Kernlogik (`imageio`, `embedder`, `search`) ist GUI-unabhängig und separat testbar.
+The core logic (`imageio`, `embedder`, `search`) is independent of the GUI and tested
+separately.
 
-## Technologie
+## Technology
 
-| Bereich       | Wahl                     | Begründung                                         |
-|---------------|--------------------------|----------------------------------------------------|
-| Sprache       | Python 3.11              | Ökosystem für PyTorch / DINOv2                     |
-| Paketmanager  | uv                       | schnell, reproduzierbar (`uv.lock`)                |
-| Modell        | DINOv2 via `transformers`| offizielle Gewichte, offline bündelbar             |
-| TIFF          | Pillow + `tifffile`      | `tifffile` deckt 16/32-bit- & wissenschaftliche TIFFs ab |
-| GUI           | PySide6 (Qt)             | native Optik, Threads, gute PyInstaller-Unterstützung |
-| Paketierung   | PyInstaller              | erzeugt eigenständige `.exe`                       |
+| Area             | Choice                    | Rationale                                          |
+|------------------|---------------------------|----------------------------------------------------|
+| Language         | Python 3.11               | PyTorch / DINOv2 ecosystem                         |
+| Package manager  | uv                        | fast, reproducible (`uv.lock`)                     |
+| Model            | DINOv2 via `transformers` | official weights, can be bundled for offline use   |
+| TIFF             | Pillow + `tifffile`       | `tifffile` covers 16/32-bit & scientific TIFFs     |
+| GUI              | PySide6 (Qt)              | native look, threading, good PyInstaller support   |
+| Packaging        | PyInstaller               | produces a standalone `.exe`                       |
 
-## Bild-Laden (`objecttwin.imageio`)
+## Image loading (`objecttwin.imageio`)
 
-`load_image(path)` liefert immer ein 8-bit-RGB-Bild (`PIL.Image`).
+`load_image(path)` always returns an 8-bit RGB image (`PIL.Image`).
 
-| Fall                                  | Behandlung                                                   |
+| Case                                  | Handling                                                     |
 |---------------------------------------|--------------------------------------------------------------|
-| TIFF (alle Varianten)                 | zuerst `tifffile` (+ `imagecodecs` für LZW, JPEG, Deflate …), bei Fehler Pillow |
-| 16/32-bit-Integer, Float              | Kontraststreckung auf 0–255 (0,5 %- bis 99,5 %-Perzentil, robust gegen Ausreißer-Pixel) |
-| NaN / ±Inf                            | werden auf den Rand des Wertebereichs gesetzt                |
-| Graustufen / Grau + Alpha             | auf 3 identische Kanäle erweitert                            |
-| Planares TIFF `(C, H, W)`             | in `(H, W, C)` umgeordnet                                    |
-| Mehrseitig / Z-Stack / Pyramide       | erste Seite bzw. erste Ebene in voller Auflösung             |
-| `MinIsWhite`-TIFF                     | invertiert                                                   |
-| Transparenz (PNG, GIF …)              | auf weißen Hintergrund gelegt                                |
-| JPEG mit EXIF-Drehung                 | Drehung wird angewendet                                      |
+| TIFF (all variants)                   | `tifffile` first (+ `imagecodecs` for LZW, JPEG, Deflate, …), Pillow as fallback |
+| 16/32-bit integer, float              | contrast stretch to 0–255 (0.5th to 99.5th percentile, robust against outlier pixels) |
+| NaN / ±Inf                            | set to the edge of the value range                           |
+| Grayscale / gray + alpha              | expanded to 3 identical channels                             |
+| Planar TIFF `(C, H, W)`               | reordered to `(H, W, C)`                                     |
+| Multi-page / Z-stack / pyramid        | first page or first plane, full resolution                   |
+| `MinIsWhite` TIFF                     | inverted                                                     |
+| Transparency (PNG, GIF, …)            | composited onto a white background                           |
+| JPEG with EXIF rotation               | rotation is applied                                          |
 
-`find_images(root)` durchsucht `root` rekursiv und liefert alle unterstützten Dateien
-(`.tif .tiff .png .jpg .jpeg .bmp .gif .webp`, Groß-/Kleinschreibung egal) in fester,
-sortierter Reihenfolge.
+`find_images(root)` searches `root` recursively and yields all supported files
+(`.tif .tiff .png .jpg .jpeg .bmp .gif .webp`, case-insensitive) in a fixed, sorted order.
