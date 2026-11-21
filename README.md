@@ -17,7 +17,7 @@ einfachen Oberfläche:
 | Schritt | Inhalt                                   | Stand   |
 |---------|------------------------------------------|---------|
 | 1       | Projektgerüst, Tooling, Doku-Grundlage   | ✅      |
-| 2       | Bild-Laden inkl. TIFF                    | geplant |
+| 2       | Bild-Laden inkl. TIFF                    | ✅      |
 | 3       | DINOv2-Embeddings & Ähnlichkeitssuche    | geplant |
 | 4       | GUI (Auswahl, Vorschau, Suche, Treffer)  | geplant |
 | 5       | Build als `.exe` (PyInstaller)           | geplant |

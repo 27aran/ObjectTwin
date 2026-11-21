@@ -1,10 +1,15 @@
 [project]
 name = "objecttwin"
 version = "0.1.0"
-description = "Findet in einer Ordnerstruktur das Bild, das einem Referenzbild am ähnlichsten ist (DINOv2)."
+description = "Find the image in a folder tree that looks most similar to a reference image (DINOv2)."
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
-dependencies = []
+dependencies = [
+    "imagecodecs>=2024.6",
+    "numpy>=1.26",
+    "pillow>=10.4",
+    "tifffile>=2024.8",
+]
 
 [project.gui-scripts]
 objecttwin = "objecttwin.__main__:main"
