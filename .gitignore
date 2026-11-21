@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Build artifacts (PyInstaller)
+build/
+dist/
+
+# Downloaded model weights (bundled into the exe at build time)
+models/
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
