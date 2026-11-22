@@ -3,6 +3,9 @@ name = "objecttwin"
 version = "0.1.0"
 description = "Find the image in a folder tree that looks most similar to a reference image (DINOv2)."
 readme = "README.md"
+license = "MIT"
+authors = [{ name = "Aran Moradi" }]
+license-files = ["LICENSE"]
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "imagecodecs>=2024.6",

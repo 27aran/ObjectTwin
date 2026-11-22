@@ -21,6 +21,7 @@ _STRINGS: dict[str, dict[str, str]] = {
     "action.exit": {"en": "E&xit", "de": "&Beenden"},
     "action.open_log": {"en": "Open &log folder", "de": "&Log-Ordner öffnen"},
     "action.about": {"en": "&About ObjectTwin", "de": "&Über ObjectTwin"},
+    "action.developer": {"en": "Developer on &LinkedIn", "de": "Entwickler auf &LinkedIn"},
     # ------------------------------------------------------------------ reference image
     "ref.title": {"en": "Reference image", "de": "Referenzbild"},
     "ref.none": {
@@ -161,13 +162,23 @@ _STRINGS: dict[str, dict[str, str]] = {
         "en": "<h3>ObjectTwin {version}</h3>"
         "<p>Finds the images in a folder tree that look most similar to a reference image, "
         "using the DINOv2 vision model by Meta AI.</p>"
-        "<p>Model: {model}<br>Device: {device}</p>",
+        "<p>Model: {model}<br>Device: {device}</p>"
+        '<p>Developed by <a href="{author_url}">{author}</a><br>{license}</p>',
         "de": "<h3>ObjectTwin {version}</h3>"
         "<p>Findet in einer Ordnerstruktur die Bilder, die einem Referenzbild am ähnlichsten "
         "sind – mit dem Bildmodell DINOv2 von Meta AI.</p>"
-        "<p>Modell: {model}<br>Gerät: {device}</p>",
+        "<p>Modell: {model}<br>Gerät: {device}</p>"
+        '<p>Entwickelt von <a href="{author_url}">{author}</a><br>{license}</p>',
     },
     "about.not_loaded": {"en": "not loaded yet", "de": "noch nicht geladen"},
+    "about.credit": {
+        "en": 'Developed by <a href="{author_url}">{author}</a>',
+        "de": 'Entwickelt von <a href="{author_url}">{author}</a>',
+    },
+    "about.credit_tip": {
+        "en": "Open the developer's LinkedIn profile",
+        "de": "LinkedIn-Profil des Entwicklers öffnen",
+    },
 }
 
 _language = DEFAULT_LANGUAGE

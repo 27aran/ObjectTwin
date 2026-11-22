@@ -78,6 +78,8 @@ obwohl ein Treffer erwartet wird, lohnt sich ein Versuch mit den anderen Modi.
 ## 5. Einstellungen
 
 * **Sprache:** *Einstellungen → Sprache → English / Deutsch*. Wirkt sofort.
+* *Hilfe → Über ObjectTwin* zeigt Version, Modell, verwendetes Gerät und den Entwickler;
+  *Hilfe → Entwickler auf LinkedIn* öffnet das Profil des Entwicklers.
 * ObjectTwin merkt sich das letzte Referenzbild, den Suchordner, die Optionen, die
   Sprache und die Fenstergröße.
 

@@ -1,5 +1,7 @@
 # Third-party components
 
+ObjectTwin itself is licensed under the [MIT License](../LICENSE).
+
 `ObjectTwin.exe` bundles the following third-party software and model weights. Their
 license texts are shipped in the package metadata inside the `_internal` folder
 (`*.dist-info`). This list is informational and not legal advice.

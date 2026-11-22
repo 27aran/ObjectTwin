@@ -19,6 +19,8 @@ if not (MODEL_DIR / "config.json").is_file():
 datas = [
     (str(MODEL_DIR), "models/dinov2-base"),
     (str(SRC / "objecttwin" / "assets"), "objecttwin/assets"),
+    (str(ROOT / "LICENSE"), "."),
+    (str(ROOT / "docs" / "third-party-licenses.md"), "."),
 ]
 # transformers checks the versions of these packages at import time -> needs their metadata.
 for package in (

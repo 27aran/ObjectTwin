@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+- MIT license (`LICENSE`); the executable now also ships `LICENSE` and
+  `third-party-licenses.md`.
+- Developer credit in the GUI: status bar link, *Help → Developer on LinkedIn* and the
+  *About* dialog.
+
 ### Planned
 - Calibrate the confidence thresholds and the default comparison mode on real example
   images from the target domain.

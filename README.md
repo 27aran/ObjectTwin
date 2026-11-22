@@ -143,4 +143,10 @@ ObjectTwin/
 └── README.md
 ```
 
+## License
+
+ObjectTwin is released under the [MIT License](LICENSE). The executable bundles
+third-party components under their own licenses – see
+[docs/third-party-licenses.md](docs/third-party-licenses.md).
+
 Architecture details: [docs/architecture.md](docs/architecture.md) · Building: [docs/building.md](docs/building.md)

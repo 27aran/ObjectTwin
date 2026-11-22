@@ -142,6 +142,19 @@ def test_bad_query_image_is_rejected(qtbot, make_window, tmp_path: Path, monkeyp
     assert not window.ref_preview.has_image()
 
 
+def test_developer_credit(qtbot, make_window) -> None:
+    from objecttwin.about import AUTHOR, AUTHOR_URL
+
+    window = make_window()
+    assert AUTHOR in window.credit_label.text()
+    assert AUTHOR_URL in window.credit_label.text()
+    assert window.credit_label.openExternalLinks()
+    assert window.act_developer in window.help_menu.actions()
+    window.set_language("de")
+    assert window.credit_label.text().startswith("Entwickelt von")
+    assert window.act_developer.text() == "Entwickler auf &LinkedIn"
+
+
 def test_model_failure_is_reported(qtbot, settings) -> None:
     def broken():
         raise RuntimeError("no weights")

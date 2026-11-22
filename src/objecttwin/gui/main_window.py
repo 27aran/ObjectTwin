@@ -46,6 +46,7 @@ from PySide6.QtWidgets import (
 )
 
 from objecttwin import __version__
+from objecttwin.about import AUTHOR, AUTHOR_URL, LICENSE_NAME
 from objecttwin.appdirs import log_dir
 from objecttwin.descriptor import DEFAULT_DESCRIPTOR, Descriptor
 from objecttwin.gui import i18n
@@ -262,6 +263,12 @@ class MainWindow(QMainWindow):
 
         self.status_label = QLabel()
         self.statusBar().addWidget(self.status_label, 1)
+        # Developer credit, right-aligned, links to the LinkedIn profile.
+        self.credit_label = QLabel()
+        self.credit_label.setTextFormat(Qt.TextFormat.RichText)
+        self.credit_label.setOpenExternalLinks(True)
+        self.credit_label.setStyleSheet("QLabel { color: palette(mid); padding-right: 6px; }")
+        self.statusBar().addPermanentWidget(self.credit_label)
 
     def _build_menu(self) -> None:
         bar = self.menuBar()
@@ -290,7 +297,11 @@ class MainWindow(QMainWindow):
         self.help_menu = bar.addMenu("")
         self.act_log = QAction(self, triggered=self._open_log_folder)
         self.act_about = QAction(self, triggered=self._show_about)
+        self.act_developer = QAction(
+            self, triggered=lambda: QDesktopServices.openUrl(QUrl(AUTHOR_URL))
+        )
         self.help_menu.addAction(self.act_log)
+        self.help_menu.addAction(self.act_developer)
         self.help_menu.addSeparator()
         self.help_menu.addAction(self.act_about)
 
@@ -313,6 +324,9 @@ class MainWindow(QMainWindow):
         self.help_menu.setTitle(tr("menu.help"))
         self.act_log.setText(tr("action.open_log"))
         self.act_about.setText(tr("action.about"))
+        self.act_developer.setText(tr("action.developer"))
+        self.credit_label.setText(tr("about.credit", author=AUTHOR, author_url=AUTHOR_URL))
+        self.credit_label.setToolTip(f"{tr('about.credit_tip')}\n{AUTHOR_URL}")
 
         self.ref_group.setTitle(tr("ref.title"))
         self.ref_preview.set_placeholder(tr("ref.none"))
@@ -703,14 +717,28 @@ class MainWindow(QMainWindow):
     def _show_about(self) -> None:
         if self._embedder is not None:
             model = str(getattr(self._embedder, "model_name", "DINOv2"))
+            if Path(model).is_dir():  # bundled weights: show the name, not the install path
+                model = Path(model).name
             device = self._device_name()
         else:
             model = device = tr("about.not_loaded")
-        QMessageBox.about(
-            self,
-            tr("about.title"),
-            tr("about.text", version=__version__, model=model, device=device),
+        box = QMessageBox(self)
+        box.setWindowTitle(tr("about.title"))
+        box.setIconPixmap(self.windowIcon().pixmap(64, 64))
+        box.setTextFormat(Qt.TextFormat.RichText)
+        box.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        box.setText(
+            tr(
+                "about.text",
+                version=__version__,
+                model=model,
+                device=device,
+                author=AUTHOR,
+                author_url=AUTHOR_URL,
+                license=LICENSE_NAME,
+            )
         )
+        box.exec()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._worker is not None:
