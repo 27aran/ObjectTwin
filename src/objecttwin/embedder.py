@@ -30,6 +30,7 @@ from transformers import Dinov2Model
 from transformers.utils import logging as hf_logging
 
 from objecttwin.descriptor import DEFAULT_DESCRIPTOR, Descriptor
+from objecttwin.resources import MODEL_ID
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ log = logging.getLogger(__name__)
 # executable - and they are noise for a GUI anyway.
 hf_logging.disable_progress_bar()
 
-DEFAULT_MODEL = "facebook/dinov2-base"
+DEFAULT_MODEL = MODEL_ID
 SPATIAL_GRID = 8
 
 RESIZE_SHORTER_SIDE = 256

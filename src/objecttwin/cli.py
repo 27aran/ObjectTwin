@@ -14,8 +14,9 @@ from collections.abc import Sequence
 
 from objecttwin import __version__
 from objecttwin.descriptor import DEFAULT_DESCRIPTOR, Descriptor
-from objecttwin.embedder import DEFAULT_MODEL, Embedder
+from objecttwin.embedder import Embedder
 from objecttwin.imageio import ImageLoadError
+from objecttwin.resources import resolve_model_source
 from objecttwin.search import DEFAULT_TOP_K, Progress, search_similar
 
 
@@ -27,7 +28,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("query", help="reference image (TIFF, PNG, JPEG, ...)")
     parser.add_argument("folder", help="folder to search (recursively)")
     parser.add_argument("--top", type=int, default=DEFAULT_TOP_K, help="number of results")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="model name or local path")
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Hugging Face model id or local folder (default: bundled dinov2-base, "
+        "else download facebook/dinov2-base)",
+    )
     parser.add_argument("--device", default=None, help="'cuda' or 'cpu' (default: auto)")
     parser.add_argument(
         "--descriptor",
@@ -53,9 +59,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         format="%(levelname)s %(name)s: %(message)s",
     )
 
-    embedder = Embedder(args.model, device=args.device, descriptor=args.descriptor)
+    model = args.model or resolve_model_source()
+    embedder = Embedder(model, device=args.device, descriptor=args.descriptor)
     print(
-        f"Model: {args.model} on {embedder.device_name}, descriptor: {embedder.descriptor}",
+        f"Model: {model} on {embedder.device_name}, descriptor: {embedder.descriptor}",
         file=sys.stderr,
     )
 

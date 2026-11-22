@@ -24,6 +24,9 @@ cu126 = ["torch>=2.5"]
 objecttwin = "objecttwin.__main__:main"
 
 [dependency-groups]
+build = [
+    "pyinstaller>=6.10",
+]
 dev = [
     "pytest>=8.3",
     "pytest-qt>=4.4",

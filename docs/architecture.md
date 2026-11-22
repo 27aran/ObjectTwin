@@ -33,7 +33,9 @@ general visual features (shape, texture, structure) – ideal for image-to-image
 | `objecttwin.cli`          | command line front end (for testing / scripting)                 |
 | `objecttwin.gui`          | PySide6 user interface (see below)                               |
 | `objecttwin.appdirs`      | per-user data / log directories                                  |
-| `objecttwin.__main__`     | entry point – starts the GUI                                     |
+| `objecttwin.resources`    | locate bundled model / icons (source checkout and frozen exe)    |
+| `objecttwin.selftest`     | `--self-test`: verifies torch/CUDA, model, TIFF, Qt              |
+| `objecttwin.__main__`     | entry point – starts the GUI (or the self-test)                  |
 
 The core logic (`imageio`, `embedder`, `search`, `uncertainty`) is independent of the GUI and tested
 separately.

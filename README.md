@@ -22,14 +22,13 @@ user interface:
 | 3    | DINOv2 embeddings & similarity search        | ✅      |
 | 4    | Confidence estimation (uncertainty)          | ✅      |
 | 5    | GUI (selection, preview, search, results)    | ✅      |
-| 6    | Build as `.exe` (PyInstaller)                | planned |
+| 6    | Build as `.exe` (PyInstaller)                | ✅      |
 | 7    | User & developer documentation               | planned |
 
 ## Using the application
 
-```powershell
-uv run objecttwin
-```
+Unzip `ObjectTwin-cu126.zip` (or `-cpu`) anywhere and start `ObjectTwin.exe` – no
+installation, no Python, works offline. From source: `uv run objecttwin`.
 
 1. **Reference image** – *Select image…* (or drag & drop a file onto the window).
    A preview and the image size are shown.
@@ -106,15 +105,30 @@ rank   score   ± std  votes  path
 | `--device`      | `cuda` or `cpu` (default: automatic)                                        |
 | `-v`            | debug logging                                                               |
 
+## Building the executable
+
+```powershell
+python scripts/build_exe.py --zip        # GPU build (CUDA 12.6), falls back to CPU
+python scripts/build_exe.py --cpu --zip  # CPU-only build (smaller)
+```
+
+The result is `dist\<variant>\ObjectTwin\ObjectTwin.exe` (+ zip). The build uses its own
+virtual environment, bundles the model weights and finishes with an automatic
+`ObjectTwin.exe --self-test`. Details: [docs/building.md](docs/building.md).
+
 ## Project structure
 
 ```
 ObjectTwin/
 ├── src/objecttwin/   # application code (package)
-├── tests/            # pytest tests
-├── docs/             # documentation
+│   ├── gui/          #   PySide6 user interface
+│   └── assets/       #   application icon
+├── tests/            # pytest tests (incl. headless GUI tests)
+├── scripts/          # build_exe.py, download_model.py, make_icon.py
+├── packaging/        # PyInstaller spec + launcher
+├── docs/             # architecture & build documentation
 ├── pyproject.toml    # metadata, dependencies, tool configuration
 └── README.md
 ```
 
-Architecture details: [docs/architecture.md](docs/architecture.md)
+Architecture details: [docs/architecture.md](docs/architecture.md) · Building: [docs/building.md](docs/building.md)
