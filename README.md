@@ -13,6 +13,8 @@ user interface:
 4. Start the search → list of candidates, ranked by similarity, with a confidence
    verdict (*confident* / *ambiguous – compare the alternatives* / *no good match*)
 
+![ObjectTwin main window](docs/images/main_window_en.png)
+
 ## Status
 
 | Step | Content                                      | State   |
@@ -23,7 +25,17 @@ user interface:
 | 4    | Confidence estimation (uncertainty)          | ✅      |
 | 5    | GUI (selection, preview, search, results)    | ✅      |
 | 6    | Build as `.exe` (PyInstaller)                | ✅      |
-| 7    | User & developer documentation               | planned |
+| 7    | User & developer documentation               | ✅      |
+
+## Documentation
+
+| Document | For |
+|----------|-----|
+| [User guide](docs/user-guide.md) · [Benutzerhandbuch](docs/user-guide.de.md) | end users |
+| [Architecture](docs/architecture.md) | developers – design, algorithms, confidence estimation |
+| [Building the exe](docs/building.md) | developers – packaging and distribution |
+| [Third-party licenses](docs/third-party-licenses.md) | distribution |
+| [Changelog](CHANGELOG.md) | everyone |
 
 ## Using the application
 
