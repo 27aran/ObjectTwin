@@ -22,6 +22,7 @@ _STRINGS: dict[str, dict[str, str]] = {
     "action.open_log": {"en": "Open &log folder", "de": "&Log-Ordner öffnen"},
     "action.about": {"en": "&About ObjectTwin", "de": "&Über ObjectTwin"},
     "action.developer": {"en": "Developer on &LinkedIn", "de": "Entwickler auf &LinkedIn"},
+    "action.source": {"en": "Source code on &GitHub", "de": "Quellcode auf &GitHub"},
     # ------------------------------------------------------------------ reference image
     "ref.title": {"en": "Reference image", "de": "Referenzbild"},
     "ref.none": {
@@ -163,21 +164,24 @@ _STRINGS: dict[str, dict[str, str]] = {
         "<p>Finds the images in a folder tree that look most similar to a reference image, "
         "using the DINOv2 vision model by Meta AI.</p>"
         "<p>Model: {model}<br>Device: {device}</p>"
-        '<p>Developed by <a href="{author_url}">{author}</a><br>{license}</p>',
+        '<p>Developed by <a href="{author_url}">{author}</a><br>'
+        'Source code: <a href="{repo_url}">{repo_label}</a><br>{license}</p>',
         "de": "<h3>ObjectTwin {version}</h3>"
         "<p>Findet in einer Ordnerstruktur die Bilder, die einem Referenzbild am ähnlichsten "
         "sind – mit dem Bildmodell DINOv2 von Meta AI.</p>"
         "<p>Modell: {model}<br>Gerät: {device}</p>"
-        '<p>Entwickelt von <a href="{author_url}">{author}</a><br>{license}</p>',
+        '<p>Entwickelt von <a href="{author_url}">{author}</a><br>'
+        'Quellcode: <a href="{repo_url}">{repo_label}</a><br>{license}</p>',
     },
     "about.not_loaded": {"en": "not loaded yet", "de": "noch nicht geladen"},
     "about.credit": {
-        "en": 'Developed by <a href="{author_url}">{author}</a>',
-        "de": 'Entwickelt von <a href="{author_url}">{author}</a>',
+        "en": 'Developed by <a href="{author_url}">{author}</a> · <a href="{repo_url}">GitHub</a>',
+        "de": 'Entwickelt von <a href="{author_url}">{author}</a>'
+        ' · <a href="{repo_url}">GitHub</a>',
     },
     "about.credit_tip": {
-        "en": "Open the developer's LinkedIn profile",
-        "de": "LinkedIn-Profil des Entwicklers öffnen",
+        "en": "Developer's LinkedIn profile and the source code on GitHub",
+        "de": "LinkedIn-Profil des Entwicklers und Quellcode auf GitHub",
     },
 }
 

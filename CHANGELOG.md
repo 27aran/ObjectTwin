@@ -11,6 +11,9 @@ All notable changes to this project are documented here. The format follows
   `third-party-licenses.md`.
 - Developer credit in the GUI: status bar link, *Help → Developer on LinkedIn* and the
   *About* dialog.
+- Link to the source repository (<https://github.com/27aran/ObjectTwin>) in the
+  status bar, *Help → Source code on GitHub*, the *About* dialog and the package
+  metadata.
 
 ### Planned
 - Calibrate the confidence thresholds and the default comparison mode on real example

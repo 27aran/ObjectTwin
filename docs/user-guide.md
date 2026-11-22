@@ -77,7 +77,9 @@ you expect a match, it can be worth trying the other modes.
 
 * **Language:** *Settings → Language → English / Deutsch*. Takes effect immediately.
 * *Help → About ObjectTwin* shows the version, the model, the device in use and the
-  developer; *Help → Developer on LinkedIn* opens the developer's profile.
+  developer; *Help → Developer on LinkedIn* opens the developer's profile and
+  *Help → Source code on GitHub* the project page
+  (<https://github.com/27aran/ObjectTwin>).
 * ObjectTwin remembers the last reference image, search folder, options, language and
   window size.
 

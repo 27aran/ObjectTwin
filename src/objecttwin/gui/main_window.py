@@ -46,7 +46,7 @@ from PySide6.QtWidgets import (
 )
 
 from objecttwin import __version__
-from objecttwin.about import AUTHOR, AUTHOR_URL, LICENSE_NAME
+from objecttwin.about import AUTHOR, AUTHOR_URL, LICENSE_NAME, REPO_URL
 from objecttwin.appdirs import log_dir
 from objecttwin.descriptor import DEFAULT_DESCRIPTOR, Descriptor
 from objecttwin.gui import i18n
@@ -301,7 +301,9 @@ class MainWindow(QMainWindow):
             self, triggered=lambda: QDesktopServices.openUrl(QUrl(AUTHOR_URL))
         )
         self.help_menu.addAction(self.act_log)
+        self.act_source = QAction(self, triggered=lambda: QDesktopServices.openUrl(QUrl(REPO_URL)))
         self.help_menu.addAction(self.act_developer)
+        self.help_menu.addAction(self.act_source)
         self.help_menu.addSeparator()
         self.help_menu.addAction(self.act_about)
 
@@ -325,8 +327,11 @@ class MainWindow(QMainWindow):
         self.act_log.setText(tr("action.open_log"))
         self.act_about.setText(tr("action.about"))
         self.act_developer.setText(tr("action.developer"))
-        self.credit_label.setText(tr("about.credit", author=AUTHOR, author_url=AUTHOR_URL))
-        self.credit_label.setToolTip(f"{tr('about.credit_tip')}\n{AUTHOR_URL}")
+        self.act_source.setText(tr("action.source"))
+        self.credit_label.setText(
+            tr("about.credit", author=AUTHOR, author_url=AUTHOR_URL, repo_url=REPO_URL)
+        )
+        self.credit_label.setToolTip(tr("about.credit_tip"))
 
         self.ref_group.setTitle(tr("ref.title"))
         self.ref_preview.set_placeholder(tr("ref.none"))
@@ -735,6 +740,8 @@ class MainWindow(QMainWindow):
                 device=device,
                 author=AUTHOR,
                 author_url=AUTHOR_URL,
+                repo_url=REPO_URL,
+                repo_label=REPO_URL.removeprefix("https://"),
                 license=LICENSE_NAME,
             )
         )

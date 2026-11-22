@@ -143,11 +143,13 @@ def test_bad_query_image_is_rejected(qtbot, make_window, tmp_path: Path, monkeyp
 
 
 def test_developer_credit(qtbot, make_window) -> None:
-    from objecttwin.about import AUTHOR, AUTHOR_URL
+    from objecttwin.about import AUTHOR, AUTHOR_URL, REPO_URL
 
     window = make_window()
     assert AUTHOR in window.credit_label.text()
     assert AUTHOR_URL in window.credit_label.text()
+    assert REPO_URL in window.credit_label.text()
+    assert window.act_source in window.help_menu.actions()
     assert window.credit_label.openExternalLinks()
     assert window.act_developer in window.help_menu.actions()
     window.set_language("de")

@@ -23,6 +23,11 @@ dependencies = [
 cpu = ["torch>=2.5"]
 cu126 = ["torch>=2.5"]
 
+[project.urls]
+Repository = "https://github.com/27aran/ObjectTwin"
+Issues = "https://github.com/27aran/ObjectTwin/issues"
+Changelog = "https://github.com/27aran/ObjectTwin/blob/main/CHANGELOG.md"
+
 [project.gui-scripts]
 objecttwin = "objecttwin.__main__:main"
 

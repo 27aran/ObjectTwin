@@ -4,6 +4,9 @@ ObjectTwin finds the image in a (nested) folder structure that **looks most simi
 to a reference image. It is built on Meta AI's self-supervised vision model
 [DINOv2](https://github.com/facebookresearch/dinov2).
 
+**Repository:** <https://github.com/27aran/ObjectTwin> · **Developer:**
+[Aran Moradi](https://www.linkedin.com/in/aran-moradi-963330370/)
+
 The end product is a standalone Windows application (`ObjectTwin.exe`) with a simple
 user interface:
 
@@ -71,6 +74,8 @@ folder*).
 Requirements: Windows 10/11, [uv](https://docs.astral.sh/uv/) (installs Python 3.11 on demand).
 
 ```powershell
+git clone https://github.com/27aran/ObjectTwin.git
+cd ObjectTwin
 uv sync --extra cpu      # create virtual environment + install dependencies (CPU PyTorch)
 uv run pytest            # fast tests incl. headless GUI tests (no model download)
 uv run pytest -m model   # tests with the real DINOv2 model (downloads weights once)
