@@ -18,7 +18,7 @@ user interface:
 |------|----------------------------------------------|---------|
 | 1    | Project scaffold, tooling, docs              | ✅      |
 | 2    | Image loading incl. TIFF                     | ✅      |
-| 3    | DINOv2 embeddings & similarity search        | planned |
+| 3    | DINOv2 embeddings & similarity search        | ✅      |
 | 4    | GUI (selection, preview, search, results)    | planned |
 | 5    | Build as `.exe` (PyInstaller)                | planned |
 | 6    | User & developer documentation               | planned |
@@ -28,12 +28,34 @@ user interface:
 Requirements: Windows 10/11, [uv](https://docs.astral.sh/uv/) (installs Python 3.11 on demand).
 
 ```powershell
-uv sync            # create virtual environment + install dependencies
-uv run pytest      # tests
-uv run ruff check  # linting
-uv run ruff format # formatting
-uv run objecttwin  # start the application
+uv sync --extra cpu      # create virtual environment + install dependencies (CPU PyTorch)
+uv run pytest            # fast tests (no model download)
+uv run pytest -m model   # tests with the real DINOv2 model (downloads weights once)
+uv run ruff check        # linting
+uv run ruff format       # formatting
+uv run objecttwin        # start the application
 ```
+
+PyTorch is installed as one of two mutually exclusive extras:
+
+| Extra   | Command                    | Use                                                   |
+|---------|----------------------------|-------------------------------------------------------|
+| `cpu`   | `uv sync --extra cpu`      | development, machines without NVIDIA GPU (small)      |
+| `cu126` | `uv sync --extra cu126`    | NVIDIA GPU via CUDA 12.6 (large, ~2.5 GB)             |
+
+The application always picks the GPU automatically when one is available and falls back
+to the CPU otherwise.
+
+### Command line
+
+The search can also be run without the GUI:
+
+```powershell
+uv run python -m objecttwin.cli path\to\query.tif path\to\folder --top 5
+```
+
+Options: `--model` (Hugging Face name or local folder, default `facebook/dinov2-base`),
+`--device cuda|cpu`, `-v` for debug logging.
 
 ## Project structure
 
