@@ -1,7 +1,14 @@
 """DINOv2 image embeddings.
 
-Each image is mapped to one global feature vector (the layer-normalised CLS token,
-``pooler_output``) which is L2-normalised, so cosine similarity is a plain dot product.
+Each image is mapped to one L2-normalised vector, so cosine similarity is a plain dot
+product. Three descriptor types are available (see :class:`Descriptor`):
+
+* ``global``  - the layer-normalised CLS token: invariant to position / crop / viewpoint,
+  captures *what kind of* image it is.
+* ``spatial`` - patch tokens average-pooled to an 8x8 grid and flattened: compares the
+  image region by region, captures fine detail and layout of *this particular* image.
+* ``hybrid``  - both, each normalised and scaled by 1/sqrt(2) before concatenation, so
+  the dot product equals the mean of the global and the spatial cosine similarity.
 
 Pre-processing replicates the official DINOv2 image processor (resize shorter side to
 256 px, bicubic -> centre crop 224 px -> ImageNet mean/std) with Pillow + numpy, which
@@ -12,8 +19,10 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import math
 import os
 from collections.abc import Sequence
+from enum import StrEnum
 
 import numpy as np
 import torch
@@ -28,11 +37,21 @@ log = logging.getLogger(__name__)
 hf_logging.disable_progress_bar()
 
 DEFAULT_MODEL = "facebook/dinov2-base"
+SPATIAL_GRID = 8
 
 RESIZE_SHORTER_SIDE = 256
 CROP_SIZE = 224
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+
+class Descriptor(StrEnum):
+    GLOBAL = "global"
+    SPATIAL = "spatial"
+    HYBRID = "hybrid"
+
+
+DEFAULT_DESCRIPTOR = Descriptor.HYBRID
 
 
 def select_device(preferred: str | None = None) -> torch.device:
@@ -68,12 +87,25 @@ class Embedder:
         self,
         model_name_or_path: str | os.PathLike[str] = DEFAULT_MODEL,
         device: str | None = None,
+        descriptor: Descriptor | str = DEFAULT_DESCRIPTOR,
     ) -> None:
         self.device = select_device(device)
-        log.info("Loading %s on %s", model_name_or_path, self.device_name)
+        self.descriptor = Descriptor(descriptor)
+        log.info(
+            "Loading %s on %s (descriptor: %s)",
+            model_name_or_path,
+            self.device_name,
+            self.descriptor,
+        )
         model = Dinov2Model.from_pretrained(str(model_name_or_path))
         self._model = model.eval().to(self.device)
-        self.dim: int = self._model.config.hidden_size
+        hidden: int = self._model.config.hidden_size
+        spatial = hidden * SPATIAL_GRID * SPATIAL_GRID
+        self.dim: int = {
+            Descriptor.GLOBAL: hidden,
+            Descriptor.SPATIAL: spatial,
+            Descriptor.HYBRID: hidden + spatial,
+        }[self.descriptor]
 
     @property
     def device_name(self) -> str:
@@ -97,12 +129,34 @@ class Embedder:
             else contextlib.nullcontext()
         )
         with autocast:
-            features = self._model(pixel_values=batch).pooler_output
-        features = torch.nn.functional.normalize(features.float(), dim=-1)
-        return features.cpu().numpy()
+            hidden = self._model(pixel_values=batch).last_hidden_state  # layer-normed
+        hidden = hidden.float()
+
+        parts: list[torch.Tensor] = []
+        if self.descriptor in (Descriptor.GLOBAL, Descriptor.HYBRID):
+            parts.append(_normalize(hidden[:, 0]))
+        if self.descriptor in (Descriptor.SPATIAL, Descriptor.HYBRID):
+            parts.append(_normalize(_patch_grid(hidden[:, 1:], SPATIAL_GRID)))
+        if len(parts) > 1:  # dot product of the concatenation = mean of the similarities
+            parts = [part / math.sqrt(len(parts)) for part in parts]
+        return torch.cat(parts, dim=-1).cpu().numpy()
 
     def embed(self, images: Sequence[Image.Image]) -> np.ndarray:
         """Convenience wrapper: pre-process and embed a list of PIL images."""
         if not images:
             return np.empty((0, self.dim), dtype=np.float32)
         return self.embed_batch(np.stack([preprocess(img) for img in images]))
+
+
+def _normalize(x: torch.Tensor) -> torch.Tensor:
+    return torch.nn.functional.normalize(x, dim=-1)
+
+
+def _patch_grid(patches: torch.Tensor, grid: int) -> torch.Tensor:
+    """Average-pool patch tokens ``(N, P, D)`` to a ``grid x grid`` map, flatten to 2-D."""
+    n, num_patches, dim = patches.shape
+    side = math.isqrt(num_patches)
+    if side * side != num_patches:
+        raise ValueError(f"Expected a square patch grid, got {num_patches} patches")
+    fmap = patches.transpose(1, 2).reshape(n, dim, side, side)
+    return torch.nn.functional.adaptive_avg_pool2d(fmap, grid).flatten(1)

@@ -15,6 +15,7 @@ import numpy as np
 from PIL import Image
 
 from objecttwin.imageio import find_images, load_image
+from objecttwin.uncertainty import Assessment, Thresholds, analyse_scores, query_variants
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +36,13 @@ class SupportsEmbedding(Protocol):
 class Match:
     path: Path
     score: float
-    """Cosine similarity in ``[-1, 1]``; 1.0 means identical embedding."""
+    """Mean cosine similarity over all query variants, in ``[-1, 1]``; 1.0 = identical."""
+    score_std: float = 0.0
+    """Standard deviation of the similarity over the query variants (stability)."""
+    votes: float = 0.0
+    """Fraction of query variants for which this image ranked first (0..1)."""
+    plausible: bool = False
+    """True if the score is statistically indistinguishable from the best match."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +55,8 @@ class Progress:
 class SearchResult:
     matches: list[Match]
     """Best matches, most similar first."""
+    assessment: Assessment
+    """Overall confidence verdict for the ranking."""
     scanned: int
     """Number of images that were successfully compared."""
     skipped: list[tuple[Path, str]] = field(default_factory=list)
@@ -74,6 +83,8 @@ def search_similar(
     top_k: int = DEFAULT_TOP_K,
     batch_size: int = DEFAULT_BATCH_SIZE,
     loader_threads: int = DEFAULT_LOADER_THREADS,
+    augment: bool = True,
+    thresholds: Thresholds | None = None,
     on_progress: Callable[[Progress], None] | None = None,
     should_cancel: Callable[[], bool] | None = None,
 ) -> SearchResult:
@@ -83,13 +94,19 @@ def search_similar(
     being embedded. The query file itself is excluded from the results if it lives
     inside *root*. Unreadable files are skipped and reported in ``SearchResult.skipped``.
 
+    With *augment* (default) the query is embedded in several perturbed variants and
+    each match carries stability statistics plus an overall verdict - see
+    :mod:`objecttwin.uncertainty`.
+
     Raises:
         ImageLoadError: if the query image cannot be read.
         NotADirectoryError: if *root* is not a directory.
         SearchCancelled: if *should_cancel* returns True.
     """
     started = time.perf_counter()
-    query_vec = embedder.embed_batch(embedder.preprocess(load_image(query_path))[None])[0]
+    query_image = load_image(query_path)
+    variants = query_variants(query_image) if augment else [query_image]
+    query_vecs = embedder.embed_batch(np.stack([embedder.preprocess(v) for v in variants]))
 
     query_resolved = Path(query_path).resolve()
     files = [p for p in find_images(root) if p.resolve() != query_resolved]
@@ -107,7 +124,8 @@ def search_similar(
 
     batches = [files[i : i + batch_size] for i in range(0, total, batch_size)]
     paths: list[Path] = []
-    vectors: list[np.ndarray] = []
+    # Only the scores are kept, not the embeddings - spatial descriptors are large.
+    score_blocks: list[np.ndarray] = []
     skipped: list[tuple[Path, str]] = []
     done = 0
 
@@ -129,21 +147,32 @@ def search_similar(
             ok = [item for item in loaded if item.pixels is not None]
             skipped.extend((item.path, item.error or "") for item in loaded if item.error)
             if ok:
-                vectors.append(embedder.embed_batch(np.stack([item.pixels for item in ok])))
+                embeddings = embedder.embed_batch(np.stack([item.pixels for item in ok]))
+                score_blocks.append(embeddings @ query_vecs.T)
                 paths.extend(item.path for item in ok)
 
             done += len(loaded)
             if on_progress:
                 on_progress(Progress(done, total))
 
-    matches: list[Match] = []
-    if vectors:
-        scores = np.concatenate(vectors) @ query_vec
-        order = np.argsort(-scores, kind="stable")[: max(0, top_k)]
-        matches = [Match(paths[i], float(scores[i])) for i in order]
+    # scores[i, j] = similarity of gallery image i to query variant j
+    scores = np.concatenate(score_blocks) if score_blocks else np.empty((0, len(variants)))
+    analysis = analyse_scores(scores, thresholds)
+    matches = [
+        Match(
+            path=paths[i],
+            score=float(analysis.mean[i]),
+            score_std=float(analysis.std[i]),
+            votes=float(analysis.votes[i]),
+            plausible=bool(analysis.plausible[i]),
+        )
+        for i in analysis.order[: max(0, top_k)]
+    ]
+    log.info("Verdict: %s", analysis.assessment)
 
     return SearchResult(
         matches=matches,
+        assessment=analysis.assessment,
         scanned=len(paths),
         skipped=skipped,
         elapsed_s=time.perf_counter() - started,

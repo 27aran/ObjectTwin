@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import numpy as np
 import pytest
 from PIL import Image, ImageDraw
@@ -46,10 +44,11 @@ def _pattern(kind: str, size: int = 320) -> Image.Image:
 
 
 @pytest.mark.model
-def test_real_dinov2_ranks_same_motif_higher(tmp_path: Path) -> None:
+@pytest.mark.parametrize("descriptor", ["global", "spatial", "hybrid"])
+def test_real_dinov2_ranks_same_motif_higher(descriptor: str) -> None:
     from objecttwin.embedder import Embedder
 
-    embedder = Embedder("facebook/dinov2-small", device="cpu")
+    embedder = Embedder("facebook/dinov2-small", device="cpu", descriptor=descriptor)
     query = _pattern("circles")
     same_motif = query.resize((200, 200)).rotate(5, fillcolor="white")
     other = _pattern("stripes")

@@ -4,6 +4,7 @@ import pytest
 
 from objecttwin.imageio import ImageLoadError
 from objecttwin.search import Progress, SearchCancelled, search_similar
+from objecttwin.uncertainty import Verdict
 
 from .conftest import FakeEmbedder, save_solid
 
@@ -26,11 +27,24 @@ def test_ranks_most_similar_first(tmp_path: Path, tree: Path, fake_embedder: Fak
 
     names = [m.path.name for m in result.matches]
     assert names[:2] == ["red_copy.png", "orange.tif"]
-    assert result.matches[0].score == pytest.approx(1.0)
+    assert result.matches[0].score == pytest.approx(1.0, abs=1e-3)  # mean over variants
     assert result.scanned == 4
     assert result.skipped == []
     scores = [m.score for m in result.matches]
     assert scores == sorted(scores, reverse=True)
+    assert result.matches[0].plausible
+    assert result.matches[0].votes == pytest.approx(1.0)
+    assert sum(m.votes for m in result.matches) == pytest.approx(1.0)
+    assert result.assessment.n_variants == 9
+
+
+def test_without_augmentation(tmp_path: Path, tree: Path, fake_embedder: FakeEmbedder) -> None:
+    query = save_solid(tmp_path / "query.tif", RED)
+    result = search_similar(query, tree, fake_embedder, augment=False)
+    assert fake_embedder.batch_sizes[0] == 1
+    assert result.assessment.n_variants == 1
+    assert result.matches[0].path.name == "red_copy.png"
+    assert all(m.score_std == 0.0 for m in result.matches)
 
 
 def test_top_k_limits_results(tmp_path: Path, tree: Path, fake_embedder: FakeEmbedder) -> None:
@@ -64,7 +78,7 @@ def test_batching_and_progress(tmp_path: Path, fake_embedder: FakeEmbedder) -> N
     result = search_similar(query, root, fake_embedder, batch_size=3, on_progress=events.append)
 
     assert result.scanned == 7
-    assert fake_embedder.batch_sizes == [1, 3, 3, 1]  # query, then batches
+    assert fake_embedder.batch_sizes == [9, 3, 3, 1]  # query variants, then batches
     assert events[0] == Progress(0, 7)
     assert events[-1] == Progress(7, 7)
     assert [e.done for e in events] == [0, 3, 6, 7]
@@ -82,6 +96,7 @@ def test_empty_folder(tmp_path: Path, fake_embedder: FakeEmbedder) -> None:
     result = search_similar(query, tmp_path / "empty", fake_embedder)
     assert result.matches == []
     assert result.scanned == 0
+    assert result.assessment.verdict == Verdict.EMPTY
 
 
 def test_bad_query_raises(tmp_path: Path, tree: Path, fake_embedder: FakeEmbedder) -> None:

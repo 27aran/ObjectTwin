@@ -10,7 +10,8 @@ user interface:
 1. Select a reference image (TIFF is fully supported, as well as PNG, JPEG, BMP, …)
 2. Check the preview
 3. Select a search folder – all subfolders are searched recursively
-4. Start the search → list of matches, ranked by similarity
+4. Start the search → list of candidates, ranked by similarity, with a confidence
+   verdict (*confident* / *ambiguous – compare the alternatives* / *no good match*)
 
 ## Status
 
@@ -19,9 +20,10 @@ user interface:
 | 1    | Project scaffold, tooling, docs              | ✅      |
 | 2    | Image loading incl. TIFF                     | ✅      |
 | 3    | DINOv2 embeddings & similarity search        | ✅      |
-| 4    | GUI (selection, preview, search, results)    | planned |
-| 5    | Build as `.exe` (PyInstaller)                | planned |
-| 6    | User & developer documentation               | planned |
+| 4    | Confidence estimation (uncertainty)          | ✅      |
+| 5    | GUI (selection, preview, search, results)    | planned |
+| 6    | Build as `.exe` (PyInstaller)                | planned |
+| 7    | User & developer documentation               | planned |
 
 ## Development
 
@@ -54,8 +56,25 @@ The search can also be run without the GUI:
 uv run python -m objecttwin.cli path\to\query.tif path\to\folder --top 5
 ```
 
-Options: `--model` (Hugging Face name or local folder, default `facebook/dinov2-base`),
-`--device cuda|cpu`, `-v` for debug logging.
+Example output:
+
+```
+Verdict: AMBIGUOUS  (plausible candidates: 2, margin: 0.0127, z: 4.8, query variants: 9)
+rank   score   ± std  votes  path
+  1*  0.8004 ±0.0199   100%  data\batch_0\img_017_variant.tif
+  2*  0.7877 ±0.0193     0%  data\batch_1\set_2\img_017.tif
+  3   0.7126 ±0.0167     0%  data\batch_0\set_1\img_004.tif
+(* = plausible: not significantly worse than the best match)
+```
+
+| Option          | Meaning                                                                     |
+|-----------------|-----------------------------------------------------------------------------|
+| `--top N`       | number of candidates to list (default 10)                                   |
+| `--descriptor`  | `hybrid` (default), `global` or `spatial` – see [architecture](docs/architecture.md#descriptors) |
+| `--no-augment`  | skip query augmentation (faster, no stability / vote estimates)             |
+| `--model`       | Hugging Face name or local folder (default `facebook/dinov2-base`)          |
+| `--device`      | `cuda` or `cpu` (default: automatic)                                        |
+| `-v`            | debug logging                                                               |
 
 ## Project structure
 
