@@ -21,9 +21,39 @@ user interface:
 | 2    | Image loading incl. TIFF                     | ✅      |
 | 3    | DINOv2 embeddings & similarity search        | ✅      |
 | 4    | Confidence estimation (uncertainty)          | ✅      |
-| 5    | GUI (selection, preview, search, results)    | planned |
+| 5    | GUI (selection, preview, search, results)    | ✅      |
 | 6    | Build as `.exe` (PyInstaller)                | planned |
 | 7    | User & developer documentation               | planned |
+
+## Using the application
+
+```powershell
+uv run objecttwin
+```
+
+1. **Reference image** – *Select image…* (or drag & drop a file onto the window).
+   A preview and the image size are shown.
+2. **Search folder** – *Browse…* (or drop a folder onto the window). All subfolders are
+   searched.
+3. Optionally set the number of **candidates** and the **comparison** mode
+   (*Hybrid* is recommended, see [Descriptors](docs/architecture.md#descriptors)).
+4. **Search.** Progress is shown; the search can be cancelled at any time.
+5. The coloured banner gives the **verdict**:
+   * green – clear match,
+   * amber – several candidates are plausible (marked ✓ and tinted green) – compare them,
+   * red – no candidate stands out; the image may not be in the folder.
+6. Click a row to compare the candidate side by side with the reference image;
+   double-click (or *Open*) opens the file, *Show in folder* reveals it in Explorer.
+
+Columns: *Similarity* = mean cosine similarity ± its standard deviation over the query
+variants; *Agreement* = share of query variants for which the image ranked first;
+*Plausible* = not significantly worse than the best match.
+
+Language (English / German) can be switched under *Settings → Language*; it and the
+last image, folder and options are remembered. The model is loaded in the background
+right after start (the status bar shows when it is ready and whether it runs on the GPU
+or the CPU). Logs are written to `%LOCALAPPDATA%\ObjectTwin\logs` (*Help → Open log
+folder*).
 
 ## Development
 
@@ -31,7 +61,7 @@ Requirements: Windows 10/11, [uv](https://docs.astral.sh/uv/) (installs Python 3
 
 ```powershell
 uv sync --extra cpu      # create virtual environment + install dependencies (CPU PyTorch)
-uv run pytest            # fast tests (no model download)
+uv run pytest            # fast tests incl. headless GUI tests (no model download)
 uv run pytest -m model   # tests with the real DINOv2 model (downloads weights once)
 uv run ruff check        # linting
 uv run ruff format       # formatting

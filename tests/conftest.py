@@ -1,4 +1,8 @@
+import os
 from pathlib import Path
+
+# Run Qt headless (must be set before a QApplication is created).
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np
 import pytest

@@ -1,14 +1,12 @@
-"""Entry point: ``python -m objecttwin`` or the ``objecttwin`` executable."""
+"""Entry point: ``python -m objecttwin`` or the ``objecttwin`` executable (starts the GUI)."""
 
 from __future__ import annotations
 
-from objecttwin import __version__
-
 
 def main() -> int:
-    # Placeholder until the GUI exists (step 4).
-    print(f"ObjectTwin {__version__}")
-    return 0
+    from objecttwin.gui import run
+
+    return run()
 
 
 if __name__ == "__main__":

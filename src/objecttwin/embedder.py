@@ -22,13 +22,14 @@ import logging
 import math
 import os
 from collections.abc import Sequence
-from enum import StrEnum
 
 import numpy as np
 import torch
 from PIL import Image
 from transformers import Dinov2Model
 from transformers.utils import logging as hf_logging
+
+from objecttwin.descriptor import DEFAULT_DESCRIPTOR, Descriptor
 
 log = logging.getLogger(__name__)
 
@@ -43,15 +44,6 @@ RESIZE_SHORTER_SIDE = 256
 CROP_SIZE = 224
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-
-
-class Descriptor(StrEnum):
-    GLOBAL = "global"
-    SPATIAL = "spatial"
-    HYBRID = "hybrid"
-
-
-DEFAULT_DESCRIPTOR = Descriptor.HYBRID
 
 
 def select_device(preferred: str | None = None) -> torch.device:
@@ -90,22 +82,27 @@ class Embedder:
         descriptor: Descriptor | str = DEFAULT_DESCRIPTOR,
     ) -> None:
         self.device = select_device(device)
-        self.descriptor = Descriptor(descriptor)
-        log.info(
-            "Loading %s on %s (descriptor: %s)",
-            model_name_or_path,
-            self.device_name,
-            self.descriptor,
-        )
-        model = Dinov2Model.from_pretrained(str(model_name_or_path))
+        self.model_name = str(model_name_or_path)
+        log.info("Loading %s on %s", self.model_name, self.device_name)
+        model = Dinov2Model.from_pretrained(self.model_name)
         self._model = model.eval().to(self.device)
-        hidden: int = self._model.config.hidden_size
-        spatial = hidden * SPATIAL_GRID * SPATIAL_GRID
+        self._hidden: int = self._model.config.hidden_size
+        self.descriptor = descriptor  # also sets self.dim
+
+    @property
+    def descriptor(self) -> Descriptor:
+        return self._descriptor
+
+    @descriptor.setter
+    def descriptor(self, value: Descriptor | str) -> None:
+        """Switch the descriptor type; cheap, the model is not reloaded."""
+        self._descriptor = Descriptor(value)
+        spatial = self._hidden * SPATIAL_GRID * SPATIAL_GRID
         self.dim: int = {
-            Descriptor.GLOBAL: hidden,
+            Descriptor.GLOBAL: self._hidden,
             Descriptor.SPATIAL: spatial,
-            Descriptor.HYBRID: hidden + spatial,
-        }[self.descriptor]
+            Descriptor.HYBRID: self._hidden + spatial,
+        }[self._descriptor]
 
     @property
     def device_name(self) -> str:

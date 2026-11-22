@@ -29,9 +29,11 @@ general visual features (shape, texture, structure) – ideal for image-to-image
 | `objecttwin.embedder`     | load DINOv2, pick GPU/CPU, pre-process, compute embeddings       |
 | `objecttwin.search`       | scan folder, parallel loading, batching, ranking, cancel/progress |
 | `objecttwin.uncertainty`  | query variants, per-candidate statistics, confidence verdict     |
+| `objecttwin.descriptor`   | descriptor enum (import-light, usable by the GUI at start-up)     |
 | `objecttwin.cli`          | command line front end (for testing / scripting)                 |
-| `objecttwin.gui`          | PySide6 user interface, background worker for the search         |
-| `objecttwin.__main__`     | entry point                                                      |
+| `objecttwin.gui`          | PySide6 user interface (see below)                               |
+| `objecttwin.appdirs`      | per-user data / log directories                                  |
+| `objecttwin.__main__`     | entry point – starts the GUI                                     |
 
 The core logic (`imageio`, `embedder`, `search`, `uncertainty`) is independent of the GUI and tested
 separately.
@@ -165,3 +167,36 @@ Observed on the synthetic set with `hybrid`:
 Votes alone can be misleading (row 3); the combination of signals is what makes the
 verdict useful. **The thresholds are not calibrated on real data.** With a handful of
 labelled query/answer pairs from the target domain they can be tuned.
+
+## GUI (`objecttwin.gui`)
+
+| Module          | Content                                                                    |
+|-----------------|----------------------------------------------------------------------------|
+| `app`           | logging set-up (rotating file in `%LOCALAPPDATA%\ObjectTwin\logs`), `QApplication`, start |
+| `main_window`   | the window: reference / candidate previews, folder & options, verdict banner, results table |
+| `workers`       | `ModelLoader` and `SearchWorker` (background threads), PIL → `QImage` conversion |
+| `widgets`       | `ImagePreview` – aspect-ratio preserving image label with placeholder text |
+| `i18n`          | English / German strings, runtime switch, `tr(key, **kwargs)`               |
+
+**Threading.** Nothing slow runs in the GUI thread. Workers are `QObject`s whose `run()`
+executes in a Python *daemon* thread; their signals are delivered to the GUI thread via
+queued connections. Daemon threads mean closing the window is never blocked (e.g. by a
+model download). The search is cancelled cooperatively (`threading.Event`, checked
+before every batch).
+
+**Start-up time.** `torch` / `transformers` take seconds to import, so the GUI modules do
+not import them; the window appears immediately and the model is created in the
+`ModelLoader` thread. The embedder is created once and reused; switching the comparison
+mode only changes `Embedder.descriptor` (no reload).
+
+**Translations.** A plain dictionary instead of Qt's `.ts`/`.qm` tool chain – two
+languages, ~80 strings, switchable without restart. A unit test enforces that every key
+exists in every language with the same `{placeholders}`. Numbers use a decimal comma in
+German.
+
+**Settings** (`QSettings`, i.e. the registry under `HKCU\Software\ObjectTwin`): language,
+last reference image, folder, number of candidates, comparison mode, window geometry.
+
+**Tests.** `tests/test_gui.py` drives the real window headless (`QT_QPA_PLATFORM=offscreen`,
+`pytest-qt`) with a fake embedder: full search, language switch, persistence, cancel,
+error handling.

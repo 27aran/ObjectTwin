@@ -13,7 +13,8 @@ import sys
 from collections.abc import Sequence
 
 from objecttwin import __version__
-from objecttwin.embedder import DEFAULT_DESCRIPTOR, DEFAULT_MODEL, Descriptor, Embedder
+from objecttwin.descriptor import DEFAULT_DESCRIPTOR, Descriptor
+from objecttwin.embedder import DEFAULT_MODEL, Embedder
 from objecttwin.imageio import ImageLoadError
 from objecttwin.search import DEFAULT_TOP_K, Progress, search_similar
 
